@@ -1,9 +1,16 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <ctype.h>
 #include <stdio.h>
 
 #define STACK_SIZE 128
+#define unreacheable() \
+    do {\
+        fprintf(stderr, "%s:%s:%d\n", \
+            __FILE__, __FUNCTION__, __LINE__); \
+        exit(1); \
+    } while (0)
 
 typedef uint8_t u8;
 typedef struct Stack Stack;
@@ -101,7 +108,7 @@ infix_to_postfix(const char *inf, size_t len){
     static const int precedences[256] = {
         ['+'] = 1,          ['-'] = 1,
         ['*'] = 2,          ['/'] = 2,
-        ['('] = INT_MAX,    [')'] = INT_MAX,
+        ['('] = INT_MIN,    [')'] = INT_MIN,
     };
     
     for(;*inf; ++inf){
@@ -109,7 +116,7 @@ infix_to_postfix(const char *inf, size_t len){
         if (is_operator(*inf)){
             u8 i;
             while (!pop(operators, &i)){
-                if (precedences[i] < precedences[(int)*inf] || i == '('){
+                if (precedences[i] < precedences[(int)*inf]){
                     push(operators, i);
                     break;
                 }
